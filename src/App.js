@@ -1,61 +1,29 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import {ethers} from 'ethers'
-import { useState,useEffect } from "react";
-import CreateEvent from "./components/CreateEvent";
-import Login from "./components/Login";
+import { Provider } from "react-redux";
+import Navbar from './components/NavBar';
+import store from './reducer/store';
+
 import "./App.css";
+import CreateEvent from "./components/CreateEvent";
 import EventList from "./components/EventList";
-import BuyTicket from "./components/BuyTicket";
-import abi from "./contract/Ticket.json";
+import BuyTicket from './components/BuyTicket';
+import Login from "./components/Login";
+
 function App() { 
-    const [state, setState] = useState({
-        provider: null,
-        signer: null,
-        contract: null,
-      });
-      const [account, setAccount] = useState("None");
-      
-    
-      useEffect(() => {
-        const connectWallet = async () => {
-          const contractAddress = "0x2De673dd920130fA73a002e780caCcca73b49884";
-          const contractABI = abi.abi;
-          try {
-            const { ethereum } = window;
-    
-            if (ethereum) {
-              const account = await ethereum.request({
-                method: "eth_requestAccounts",
-              });
-    
-              const provider = new ethers.providers.Web3Provider(ethereum);
-              const signer = provider.getSigner();
-              const contract = new ethers.Contract(
-                contractAddress,
-                contractABI,
-                signer
-              );
-              setAccount(account);
-              setState({ provider, signer, contract });
-            } else {
-              alert("Please install metamask");
-            }
-          } catch (error) {
-            console.log(error);
-          }
-        };
-        connectWallet();
-      }, [account]);
- return <div>
- <Router>
-  <Routes>
-  <Route path="/" element={<Login />} />
-  <Route path = '/event' element={<CreateEvent />} />
-  <Route path = '/list' element={<EventList />} />
-  <Route path = '/buy' element={<BuyTicket state={state} />} />
-  </Routes>
- </Router>
- </div>
+   
+ return (
+  <Provider store={store}>
+  <Router>
+    <Routes>
+    <Route path='/nav' element={<Navbar />} /> 
+    <Route path='/' element={<Login />} /> 
+    <Route path='/event' element={<CreateEvent />} /> 
+    <Route path='/list' element={<EventList />} /> 
+    <Route path='/buy' element={<BuyTicket />} /> 
+    </Routes>
+  </Router>
+</Provider>  
+);
 }
 
 export default App;

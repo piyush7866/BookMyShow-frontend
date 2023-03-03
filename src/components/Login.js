@@ -39,7 +39,7 @@ function Login() {
         setErrorMessages({ name: "pass", message: errors.pass });
       } else {
         setIsSubmitted(true);
-        navigate('/event')
+        navigate('/nav')
       }
     } else {
       // Username not found

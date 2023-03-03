@@ -1,55 +1,82 @@
-import { ethers } from "ethers";
-import React, { useState,useEffect } from 'react'
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { useWeb3React } from "@web3-react/core";
 import axios from 'axios'
 
 
-function BuyTicket({state}) {
-    const {contract} = state
-    const [Data,setData] = useState([])
-    const [quantity,setQuantity] = useState(0)
-    const [date,setDate] = useState("")
-    const [venue,setVenue] = useState("")
-    const [eventName,setEventName] = useState("")
 
-    const ticketHandler = async(event)=>{
-      event.preventDefault(); 
-      const amount = {
-        value:ethers.utils.parseEther("0.00001")*quantity
+const BuyTicket = () => {
+
+  const {account , library} = useWeb3React();
+  const TicketAbi = useSelector((state) => state.token.TicketAbi);
+  const [eventName,setEventName] = useState("")
+  const [quantity,setQuantity] = useState(0)
+  const [data,setData] = useState([])
+  const [eventId,setEventId] = useState(0)
+  const handleOnChange = async (event)=>{
+    event.preventDefault();
+    data.map(async(item)=>{
+      if (item.EventName==eventName){
+        console.log(typeof item.Price);
+        console.log(item.EventName)
+        const price = parseInt(item.Price) * parseInt(quantity);
+        console.log(price);
+        const buyTicket = await TicketAbi.methods.buyNFT(parseInt(price),parseInt(quantity),eventId).send({
+          from:account,
+          value:library.utils.toWei(price.toString(),"ether"),
+          gas:1000000
+        })
+ 
+        // const updatedTotalTickets = item.TotalTicket - quantity
+        // axios.put(`http://localhost:4000/api/event:${updatedTotalTickets}`).then(result=>console.log(result)).catch(err=>console.log(err))
+        console.log(buyTicket, "HERE BUYTICKETS");
       }
-      Data.map(item=>{
-        console.log(setDate(item.Date))
-      })
-      const unixDate = Math.floor(new Date(date).getTime() / 1000)
-     const transaction = contract.createNFT("Blockchain",unixDate,amount,'Mumbai',quantity)
-     await transaction.wait;
-      console.log('Transaction done');
-      console.log(date)
-      console.log(contract)
-    }
-    useEffect(()=>{
-      axios.get('http://localhost:4000/api/all-event')
-      .then((res)=>{
-        console.log(res);
-        setData(res.data);
-      })
-    },[]) 
+      
+    })
+   
+  }
+
+  const getDetails = async () => {
+    const getValue = await TicketAbi.methods.getUserDetails(account).call({
+      from: account,
+    })
+    console.log(getValue, "get user details here")
+  }
+
+  useEffect(()=>{
+    axios.get('http://localhost:4001/api/all-event')
+    .then((res)=>{
+      console.log(res);
+      setData(res.data);
+    })
+    getDetails();
+  },[]) 
+
   return (
-    <div>BuyTicket
-      <form onSubmit={ticketHandler}>
-        <label>Number of Tickets</label>
-        <input value={quantity} onChange={e=>setQuantity(e.target.value)}></input>
-        <button type='submit'>Buy</button>
-      </form>
-      <ul>
-        {
-          Data.map(item=>
-            <li key={item.EventName}>
-              {item.EventName} and {item.Date}
-            </li>)
-        }
-      </ul>
+    <div>
+      <h1>BUY TICKET</h1>
+      <form>
+        <div className="mb-3">
+        <label className="form-label">Event Name</label>
+          <input type="text" className="form-control" value={eventName} onChange={e=>setEventName(e.target.value)}></input>
+        </div>
+          <div className="mb-3">
+          <label className="form-label">Number of Tickets</label>
+          <input type="number" className="form-control" value={quantity} onChange={e=>setQuantity(e.target.value)}></input>
+          </div>
+          <div className="mb-3">
+          <label className="form-label">Event Id</label>
+          <input type="number" className="form-control" value={eventId} onChange={e=>setEventId(e.target.value)}></input>
+          </div>
+          <button onClick={handleOnChange} className="btn btn-primary btn-lg">
+            buy 
+          </button>
+          </form>
     </div>
   )
 }
 
-export default BuyTicket
+
+
+
+export default BuyTicket;
